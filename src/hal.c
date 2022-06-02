@@ -40,7 +40,33 @@ To port this project, replace the following functions by your own:
 #include "fce.h"
 #include "common.h"
 
-  
+
+void memcpy(char* dst, char* src, int size) 
+{
+    int rem = size & 0x3;
+    int words = size >> 2;
+    int* word_dst = (int*) dst;
+    int* word_src = (int*) src;
+    for (int i = 0; i < words; ++i) {
+        *(word_dst++) = *(word_src++);
+    }
+    char *char_dst = (char*) word_dst;
+    char *char_src = (char*) word_src;
+    for (int i = 0; i < rem; ++i) {
+        *(char_dst++) = *(char_src++);
+    }
+}
+
+int memcmp(char* a, char* b, int size) {
+    for (int i = 0; i < size; ++i) {
+        int result = *a - *b;
+        if (result != 0) return result;
+        ++a;
+        ++b;
+    }
+    return 0;    
+}
+
 /* Wait until next allegro timer event is fired. */
 void wait_for_frame()
 {
