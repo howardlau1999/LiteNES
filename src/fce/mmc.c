@@ -1,6 +1,5 @@
 #include "mmc.h"
 #include "ppu.h"
-#include <string.h>
 
 #define MMC_MAX_PAGE_COUNT 256
 
@@ -9,6 +8,7 @@ byte mmc_chr_pages[MMC_MAX_PAGE_COUNT][0x2000];
 int mmc_prg_pages_number, mmc_chr_pages_number;
 
 byte memory[0x10000];
+byte mmc_id;
 
 inline byte mmc_read(word address)
 {

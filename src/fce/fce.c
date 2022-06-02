@@ -4,7 +4,6 @@
 #include "ppu.h"
 #include "hal.h"
 #include "nes.h"
-#include <string.h>
 
 PixelBuf bg, bbg, fg;
 
