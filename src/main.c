@@ -15,10 +15,43 @@ How does the emulator work?
   6) when SIGINT signal is received, it kills itself
 */
 
-static char rom[1048576];
+#include "fce.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <signal.h>
+#include <unistd.h>
 
-int main()
+
+void do_exit() // normal exit at SIGINT
 {
+    kill(getpid(), SIGKILL);
+}
+
+int main(int argc, char *argv[])
+{
+    char *rom = malloc(1024 * 1024);
+    if (argc != 2)
+    {
+        fprintf(stderr, "Usage: mynes romfile.nes\n");
+        exit(1);
+    }
+    FILE *fp = fopen(argv[1], "r");
+    if (fp == NULL)
+    {
+        fprintf(stderr, "Open rom file failed.\n");
+        exit(1);
+    }
+    int nread = fread(rom, 1024 * 1024, 1, fp);
+    if (nread == 0 && ferror(fp)) {
+        fprintf(stderr, "Read rom file failed.\n");
+        exit(1);
+    }
+    if (fce_load_rom(rom) != 0)
+    {
+        fprintf(stderr, "Invalid or unsupported rom.\n");
+        exit(1);
+    }
+    signal(SIGINT, do_exit);
     fce_init();
     fce_run();
     return 0;

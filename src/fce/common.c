@@ -15,7 +15,7 @@ M_common(b, byte)
 M_common(w, word)
 M_common(d, dword)
 M_common(q, qword)
-
+#ifdef YATCPU
 void* memcpy(void* src, const void * dst, unsigned int size)
 {
     int rem = size & 0x3;
@@ -59,3 +59,4 @@ __mulsi3 (unsigned int a, unsigned int b)
     }
   return r;
 }
+#endif

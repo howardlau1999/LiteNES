@@ -19,17 +19,11 @@ static ines_header fce_rom_header;
 
 // FCE Lifecycle
 
-void
-romread(char *rom, void *buf, int size)
+int fce_load_rom(char *prom)
 {
-    static int off = 0;
-    memcpy(buf, rom + off, size);
-    off += size;
-}
-
-int fce_load_rom(char *rom)
-{
-    romread(rom, &fce_rom_header, sizeof(fce_rom_header));
+    byte* rom = (byte*) prom;
+    memcpy(&fce_rom_header, rom, sizeof(fce_rom_header));
+    rom += sizeof(fce_rom_header);
 
     if (memcmp(fce_rom_header.signature, "NES\x1A", 4)) {
         return -1;
@@ -38,32 +32,30 @@ int fce_load_rom(char *rom)
     mmc_id = ((fce_rom_header.rom_type & 0xF0) >> 4);
 
     int prg_size = fce_rom_header.prg_block_count * 0x4000;
-    static byte buf[1048576];
-    romread(rom, buf, prg_size);
 
     if (mmc_id == 0 || mmc_id == 3) {
         // if there is only one PRG block, we must repeat it twice
         if (fce_rom_header.prg_block_count == 1) {
-            mmc_copy(0x8000, buf, 0x4000);
-            mmc_copy(0xC000, buf, 0x4000);
+            mmc_copy(0x8000, rom, 0x4000);
+            mmc_copy(0xC000, rom, 0x4000);
         }
         else {
-            mmc_copy(0x8000, buf, 0x8000);
+            mmc_copy(0x8000, rom, 0x8000);
         }
     }
     else {
         return -1;
     }
-
+    rom += prg_size;
     // Copying CHR pages into MMC and PPU
     int i;
     for (i = 0; i < fce_rom_header.chr_block_count; i++) {
-        romread(rom, buf, 0x2000);
-        mmc_append_chr_rom_page(buf);
+        mmc_append_chr_rom_page(rom);
 
         if (i == 0) {
-            ppu_copy(0x0000, buf, 0x2000);
+            ppu_copy(0x0000, rom, 0x2000);
         }
+	rom += 0x2000;
     }
 
     return 0;

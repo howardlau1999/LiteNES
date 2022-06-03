@@ -4,14 +4,13 @@
 #include "nes.h"
 
 struct Pixel {
-    int x, y; // (x, y) coordinate
-    int c; // RGB value of colors can be found in fce.h
+	int xyc;
 };
 typedef struct Pixel Pixel;
 
 /* A buffer of pixels */
 struct PixelBuf {
-	Pixel buf[264 * 264];
+	Pixel buf[256 * 256];
 	int size;
 };
 typedef struct PixelBuf PixelBuf;
@@ -28,9 +27,8 @@ extern PixelBuf bg, bbg, fg;
 #define pixbuf_add(bf, xa, ya, ca) \
 	do { \
 		if ((xa) < SCREEN_WIDTH && (ya) < SCREEN_HEIGHT) { \
-			(bf).buf[(bf).size].x = (xa); \
-			(bf).buf[(bf).size].y = (ya); \
-			(bf).buf[(bf).size].c = (ca); \
+			int xyc = ((xa) << 20) | ((ya) << 8) | ((ca)); \
+			(bf).buf[(bf).size].xyc = (xyc); \
 			(bf).size++; \
 		} \
 	} while (0)

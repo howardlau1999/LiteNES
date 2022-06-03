@@ -1,10 +1,13 @@
 #include <stdbool.h>
 #include <stdint.h>
+#ifndef YATCPU
+#include <stdio.h>
+#include <string.h>
+#endif
 
 #ifndef COMMON_H
 #define COMMON_H
 
-#define NULL ((void*) 0)
 
 typedef uint8_t byte;
 typedef uint16_t word;
@@ -37,8 +40,10 @@ void common_set_bitq(qword *variable, byte position);
 void common_unset_bitq(qword *variable, byte position);
 void common_toggle_bitq(qword *variable, byte position);
 void common_modify_bitq(qword *variable, byte position, bool set);
-
+#ifdef YATCPU
 void* memcpy(void* src, const void * dst, unsigned int size);
 int memcmp(const void* va, const void* vb, unsigned int size);
 unsigned int __mulsi3 (unsigned int a, unsigned int b);
+#define NULL ((void*) 0)
+#endif
 #endif
