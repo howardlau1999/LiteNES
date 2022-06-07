@@ -16,7 +16,7 @@ M_common(w, word)
 M_common(d, dword)
 M_common(q, qword)
 #ifdef YATCPU
-void* memcpy(void* src, const void * dst, unsigned int size)
+void* memcpy(void* dst, const void * src, unsigned int size)
 {
     int rem = size & 0x3;
     int words = size >> 2;

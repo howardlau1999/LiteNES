@@ -10,7 +10,7 @@ typedef struct Pixel Pixel;
 
 /* A buffer of pixels */
 struct PixelBuf {
-	Pixel buf[256 * 256];
+	Pixel buf[264 * 264];
 	int size;
 };
 typedef struct PixelBuf PixelBuf;

@@ -41,7 +41,7 @@ void common_unset_bitq(qword *variable, byte position);
 void common_toggle_bitq(qword *variable, byte position);
 void common_modify_bitq(qword *variable, byte position, bool set);
 #ifdef YATCPU
-void* memcpy(void* src, const void * dst, unsigned int size);
+void* memcpy(void* dst, const void * src, unsigned int size);
 int memcmp(const void* va, const void* vb, unsigned int size);
 unsigned int __mulsi3 (unsigned int a, unsigned int b);
 #define NULL ((void*) 0)

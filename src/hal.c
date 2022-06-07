@@ -70,7 +70,7 @@ void wait_for_frame()
 {
     #ifdef YATCPU
     timer_fired = 0;
-    while(!timer_fired);
+    // while(!timer_fired);
     #endif
     #ifdef LITENES_DEBUG
     if (frames >= EMU_FRAMES) {
@@ -129,6 +129,10 @@ void nes_hal_init()
         color_map[i] = rgb888to565(color.r, color.g, color.b);
     }
     #ifdef YATCPU
+    int *vram = ((int *) VRAM);
+    for (int i = 0; i < CANVAS_HEIGHT * CANVAS_WIDTH / 2; ++i) {
+        vram[i] = 0xFFFFFFFF;
+    }
     enable_interrupt();
     *TIMER_LIMIT = REFRESH_TIMER_LIMIT;
     *TIMER_ENABLED = 1;
@@ -139,11 +143,13 @@ void nes_hal_init()
    Timer ensures this function is called FPS times a second. */
 void nes_flip_display()
 {
+    int bgc = bg_color | (bg_color << 16);
     #ifdef YATCPU
     int *fbuf = ((int *) frame_buffer);
     int *vram = ((int *) VRAM);
     for (int i = 0; i < CANVAS_HEIGHT * CANVAS_WIDTH / 2; ++i) {
         vram[i] = fbuf[i];
+        fbuf[i] = bgc;
     }
     #endif
     #ifdef LITENES_DEBUG
@@ -152,12 +158,11 @@ void nes_flip_display()
     FILE* fp = fopen(filename, "wb");
     fwrite(frame_buffer, CANVAS_WIDTH * CANVAS_HEIGHT * 2, 1, fp);
     fclose(fp);
-    #endif
     int* fbuf = ((int*)frame_buffer);
-    int bgc = bg_color | (bg_color << 16);
     for (int i = 0; i < CANVAS_HEIGHT * CANVAS_WIDTH / 2; ++i) {
         fbuf[i] = bgc;
     }
+    #endif
 }
 
 /* Query a button's state.
