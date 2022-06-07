@@ -87,27 +87,19 @@ void nes_set_bg_color(int c)
     bg_color = color_map[c];
 }
 
-static inline void draw_pixel(int x, int y, uint16_t color)
-{
-    frame_buffer[y * CANVAS_WIDTH + x] = color;
-}
-
 /* Flush the pixel buffer */
 void nes_flush_buf(PixelBuf *buf) {
     int i;
-    int *fbuf = ((int *) frame_buffer);
-    int bgc = bg_color | (bg_color << 16);
-    for (i = 0; i < CANVAS_HEIGHT * CANVAS_WIDTH / 2; ++i) {
-        fbuf[i] = bgc;
-    }
+    
     for (i = 0; i < buf->size; i ++) {
         Pixel *p = &buf->buf[i];
         int x = (p->xyc & 0xFFF00000) >> 20;
         int y = (p->xyc & 0xFFF00) >> 8;
         int cc = p->xyc & 0xFF;
         uint16_t c = color_map[cc];
-        draw_pixel(x, y, c);
+        frame_buffer[y * CANVAS_WIDTH + x] = c;
     }
+    buf->size = 0;
 }
 
 #ifdef YATCPU
@@ -161,6 +153,11 @@ void nes_flip_display()
     fwrite(frame_buffer, CANVAS_WIDTH * CANVAS_HEIGHT * 2, 1, fp);
     fclose(fp);
     #endif
+    int* fbuf = ((int*)frame_buffer);
+    int bgc = bg_color | (bg_color << 16);
+    for (int i = 0; i < CANVAS_HEIGHT * CANVAS_WIDTH / 2; ++i) {
+        fbuf[i] = bgc;
+    }
 }
 
 /* Query a button's state.
