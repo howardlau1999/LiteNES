@@ -10,12 +10,12 @@ int mmc_prg_pages_number, mmc_chr_pages_number;
 byte memory[0x10000];
 byte mmc_id;
 
-inline byte mmc_read(word address)
+extern inline byte mmc_read(word address)
 {
     return memory[address];
 }
 
-inline void mmc_write(word address, byte data)
+extern inline void mmc_write(word address, byte data)
 {
     switch (mmc_id) {
         case 0x3: {
@@ -26,12 +26,12 @@ inline void mmc_write(word address, byte data)
     memory[address] = data;
 }
 
-inline void mmc_copy(word address, byte *source, int length)
+extern inline void mmc_copy(word address, byte *source, int length)
 {
     memcpy(&memory[address], source, length);
 }
 
-inline void mmc_append_chr_rom_page(byte *source)
+extern inline void mmc_append_chr_rom_page(byte *source)
 {
     memcpy(&mmc_chr_pages[mmc_chr_pages_number++][0], source, 0x2000);
 }

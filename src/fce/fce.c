@@ -55,7 +55,7 @@ int fce_load_rom(char *prom)
         if (i == 0) {
             ppu_copy(0x0000, rom, 0x2000);
         }
-	rom += 0x2000;
+	    rom += 0x2000;
     }
 
     return 0;

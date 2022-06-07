@@ -17,12 +17,24 @@ How does the emulator work?
 
 #include "fce.h"
 
-extern char *rom;
+extern char rom[];
 
 int main(int argc, char *argv[])
 {
-    fce_load_rom(rom);
+    int res = fce_load_rom(rom);
+    #ifdef LITENES_DEBUG
+    if (res != 0) {
+      printf("Error: failed to load rom file.\n");
+      return -1;
+    }
+    #endif
+    #ifdef LITENES_DEBUG
+      printf("ROM Loaded.\n");
+    #endif
     fce_init();
+    #ifdef LITENES_DEBUG
+      printf("FCE initialized.\n");
+    #endif
     fce_run();
     return 0;
 }

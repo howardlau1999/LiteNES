@@ -20,7 +20,7 @@ unsigned long long cpu_cycles;  // Total CPU Cycles Since Power Up (wraps)
 
 // CPU Memory
 
-inline byte cpu_ram_read(word address)
+extern inline byte cpu_ram_read(word address)
 {
     return CPU_RAM[address & 0x7FF];
 }
@@ -34,9 +34,9 @@ void cpu_ram_write(word address, byte data)
 
 // Interrupt Addresses
 
-inline word cpu_nmi_interrupt_address()   { return memory_readw(0xFFFA); }
-inline word cpu_reset_interrupt_address() { return memory_readw(0xFFFC); }
-inline word cpu_irq_interrupt_address()   { return memory_readw(0xFFFE); }
+extern inline word cpu_nmi_interrupt_address()   { return memory_readw(0xFFFA); }
+extern inline word cpu_reset_interrupt_address() { return memory_readw(0xFFFC); }
+extern inline word cpu_irq_interrupt_address()   { return memory_readw(0xFFFE); }
 
 
 
@@ -567,7 +567,7 @@ void cpu_interrupt()
     // }
 }
 
-inline unsigned long long cpu_clock()
+extern inline unsigned long long cpu_clock()
 {
     return cpu_cycles;
 }

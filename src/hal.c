@@ -39,7 +39,9 @@ To port this project, replace the following functions by your own:
 #include "hal.h"
 #include "fce.h"
 #include "common.h"
+#ifdef YATCPU
 #include "mmio.h"
+#endif 
 
 #define REFRESH_TIMER_LIMIT 2083333
 volatile int timer_fired = 0;
@@ -58,11 +60,25 @@ static inline uint16_t rgb888to565(unsigned char r, unsigned char g, unsigned ch
     return rgb565;
 } 
 
+#ifdef LITENES_DEBUG
+#define EMU_FRAMES 600
+int frames = 0;
+#endif
+
 /* Wait until next allegro timer event is fired. */
 void wait_for_frame()
 {
+    #ifdef YATCPU
     timer_fired = 0;
     while(!timer_fired);
+    #endif
+    #ifdef LITENES_DEBUG
+    if (frames >= EMU_FRAMES) {
+        exit(0);
+    }
+    ++frames;
+    printf("Emulating frame %d\n", frames);
+    #endif
 }
 
 /* Set background color. RGB value of c is defined in fce.h */
@@ -94,6 +110,7 @@ void nes_flush_buf(PixelBuf *buf) {
     }
 }
 
+#ifdef YATCPU
 void on_timer() {
 	timer_fired = 1;
 }
@@ -108,6 +125,7 @@ void trap_handler(void *epc, unsigned int cause) {
 }
 
 void enable_interrupt();
+#endif 
 
 /* Initialization:
    (1) start a 1/FPS Hz timer. 
@@ -118,21 +136,31 @@ void nes_hal_init()
         pal color = palette[i];
         color_map[i] = rgb888to565(color.r, color.g, color.b);
     }
+    #ifdef YATCPU
     enable_interrupt();
     *TIMER_LIMIT = REFRESH_TIMER_LIMIT;
     *TIMER_ENABLED = 1;
+    #endif
 }
 
 /* Update screen at FPS rate by allegro's drawing function. 
    Timer ensures this function is called FPS times a second. */
 void nes_flip_display()
 {
-    nes_set_bg_color(bg_color);
+    #ifdef YATCPU
     int *fbuf = ((int *) frame_buffer);
     int *vram = ((int *) VRAM);
     for (int i = 0; i < CANVAS_HEIGHT * CANVAS_WIDTH / 2; ++i) {
         vram[i] = fbuf[i];
     }
+    #endif
+    #ifdef LITENES_DEBUG
+    char filename[32];
+    snprintf(filename, 32, "frame_%d.rgb565", frames);
+    FILE* fp = fopen(filename, "wb");
+    fwrite(frame_buffer, CANVAS_WIDTH * CANVAS_HEIGHT * 2, 1, fp);
+    fclose(fp);
+    #endif
 }
 
 /* Query a button's state.
