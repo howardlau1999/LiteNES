@@ -11,9 +11,9 @@ void fce_update_screen();
 // Palette
 
 typedef struct __pal {
-	int r;
-	int g;
-	int b;
+	unsigned char r;
+	unsigned char g;
+	unsigned char b;
 } pal;
 
 static const pal palette[64] = {
