@@ -5,8 +5,8 @@
 #include "memory.h"
 #include "hal.h"
 
-#define PLA(l,h,x) ((((h >> (7 - x)) & 1) << 1) | ((l >> (7 - x)) & 1))
-#define PLAF(l,h,x) ((((h >> x) & 1) << 1) | ((l >> x) & 1))
+#define PLA(l,h,x) (ppu_l_h_addition_table[l][h][x])
+#define PLAF(l,h,x) (ppu_l_h_addition_flip_table[l][h][x])
 
 byte ppu_sprite_palette[4][4];
 bool ppu_2007_first_read;
@@ -374,6 +374,16 @@ void ppu_init()
     ppu.PPUSTATUS |= 0xA0;
     ppu.PPUDATA = 0;
     ppu_2007_first_read = true;
+
+    int h, l, x;
+    for (h = 0; h < 0x100; h++) {
+        for (l = 0; l < 0x100; l++) {
+            for (x = 0; x < 8; x++) {
+                ppu_l_h_addition_table[l][h][x] = (((h >> (7 - x)) & 1) << 1) | ((l >> (7 - x)) & 1);
+                ppu_l_h_addition_flip_table[l][h][x] = (((h >> x) & 1) << 1) | ((l >> x) & 1);
+            }
+        }
+    }
 }
 
 void ppu_sprram_write(byte data)

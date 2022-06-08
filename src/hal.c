@@ -47,6 +47,7 @@ To port this project, replace the following functions by your own:
 volatile int timer_fired = 0;
 
 #define CANVAS_WIDTH 320
+#define X_OFFSET 32
 #define CANVAS_HEIGHT 240
 
 uint16_t color_map[64];
@@ -69,15 +70,8 @@ int frames = 0;
 void wait_for_frame()
 {
     #ifdef YATCPU
-    timer_fired = 0;
+    // timer_fired = 0;
     // while(!timer_fired);
-    #endif
-    #ifdef LITENES_DEBUG
-    if (frames >= EMU_FRAMES) {
-        exit(0);
-    }
-    ++frames;
-    printf("Emulating frame %d\n", frames);
     #endif
 }
 
@@ -93,7 +87,7 @@ void nes_flush_buf(PixelBuf *buf) {
     
     for (i = 0; i < buf->size; i ++) {
         Pixel *p = &buf->buf[i];
-        int x = (p->xyc & 0xFFF00000) >> 20;
+        int x = ((p->xyc & 0xFFF00000) >> 20) + X_OFFSET;
         int y = (p->xyc & 0xFFF00) >> 8;
         int cc = p->xyc & 0xFF;
         uint16_t c = color_map[cc];
@@ -130,12 +124,17 @@ void nes_hal_init()
     }
     #ifdef YATCPU
     int *vram = ((int *) VRAM);
-    for (int i = 0; i < CANVAS_HEIGHT * CANVAS_WIDTH / 2; ++i) {
-        vram[i] = 0xFFFFFFFF;
+    for (int y = 0; y < CANVAS_HEIGHT; ++y) {
+        for (int x = 0; x < 16; ++x) {
+            vram[y * CANVAS_WIDTH / 2 + x] = 0;
+        }
+        for (int x = 144; x < 160; ++x) {
+            vram[y * CANVAS_WIDTH / 2 + x] = 0;
+        }
     }
-    enable_interrupt();
-    *TIMER_LIMIT = REFRESH_TIMER_LIMIT;
-    *TIMER_ENABLED = 1;
+    // enable_interrupt();
+    // *TIMER_LIMIT = REFRESH_TIMER_LIMIT;
+    // *TIMER_ENABLED = 1;
     #endif
 }
 
@@ -147,9 +146,12 @@ void nes_flip_display()
     #ifdef YATCPU
     int *fbuf = ((int *) frame_buffer);
     int *vram = ((int *) VRAM);
-    for (int i = 0; i < CANVAS_HEIGHT * CANVAS_WIDTH / 2; ++i) {
-        vram[i] = fbuf[i];
-        fbuf[i] = bgc;
+    for (int y = 0; y < CANVAS_HEIGHT; ++y) {
+        for (int x = 16; x < 144; ++x) {
+            int i = y * CANVAS_WIDTH / 2 + x;
+            vram[i] = fbuf[i];
+            fbuf[i] = bgc;
+        }
     }
     #endif
     #ifdef LITENES_DEBUG
@@ -162,6 +164,12 @@ void nes_flip_display()
     for (int i = 0; i < CANVAS_HEIGHT * CANVAS_WIDTH / 2; ++i) {
         fbuf[i] = bgc;
     }
+
+    if (frames >= EMU_FRAMES) {
+        exit(0);
+    }
+    ++frames;
+    printf("Emulating frame %d\n", frames);
     #endif
 }
 
@@ -169,6 +177,8 @@ void nes_flip_display()
    Returns 1 if button #b is pressed. */
 int nes_key_state(int b)
 {
+    #ifdef YATCPU
+    #endif
     return 0;
 }
 

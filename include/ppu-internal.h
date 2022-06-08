@@ -4,6 +4,9 @@
 #define PPU_INTERNAL_H
 
 
+// Precalculated tile high and low bytes addition for pattern tables
+byte ppu_l_h_addition_table[256][256][8];
+byte ppu_l_h_addition_flip_table[256][256][8];
 
 // PPU Memory and State
 

@@ -16,11 +16,19 @@ How does the emulator work?
 */
 
 #include "fce.h"
-
+#ifdef YATCPU
+#include "mmio.h"
+#endif
 extern char rom[];
 
 int main(int argc, char *argv[])
 {
+    #ifdef YATCPU 
+    int *vram = ((int *) VRAM);
+    for (int i = 0; i < 320 * 240 / 2; ++i) {
+        vram[i] = 0xFFFFFFFF;
+    }
+    #endif
     int res = fce_load_rom(rom);
     #ifdef LITENES_DEBUG
     if (res != 0) {
