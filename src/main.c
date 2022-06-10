@@ -20,16 +20,23 @@ How does the emulator work?
 #include "mmio.h"
 #endif
 extern char rom[];
-
+#define CANVAS_WIDTH 320
+#define X_OFFSET 32
+#define CANVAS_HEIGHT 240
 int main(int argc, char *argv[])
 {
     #ifdef YATCPU 
     int *vram = ((int *) VRAM);
-    for (int i = 0; i < 320 * 240 / 2; ++i) {
+    for (int i = 0; i < 320 * 240; ++i) {
         vram[i] = 0xFFFFFFFF;
     }
     #endif
     int res = fce_load_rom(rom);
+    #ifdef YATCPU
+    for (int i = 0; i < 320 * 240; ++i) {
+        vram[i] = 0x000000FF;
+    }
+    #endif
     #ifdef LITENES_DEBUG
     if (res != 0) {
       printf("Error: failed to load rom file.\n");
@@ -40,6 +47,13 @@ int main(int argc, char *argv[])
       printf("ROM Loaded.\n");
     #endif
     fce_init();
+    #ifdef YATCPU
+        for (int y = 0; y < CANVAS_HEIGHT; ++y) {
+        for (int x = 32; x < 288; ++x) {
+            vram[y * CANVAS_WIDTH + x] = 0x0000FF00;
+        }
+    }
+    #endif
     #ifdef LITENES_DEBUG
       printf("FCE initialized.\n");
     #endif

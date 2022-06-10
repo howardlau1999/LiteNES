@@ -15,7 +15,7 @@ typedef struct {
     byte reserved[8];
 } ines_header;
 
-static ines_header fce_rom_header;
+ines_header fce_rom_header;
 
 // FCE Lifecycle
 
