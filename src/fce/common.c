@@ -14,20 +14,12 @@ bool common_bit_set(long long value, byte position) { return value & (1L << posi
 M_common(b, byte)
 M_common(w, word)
 M_common(d, dword)
-M_common(q, qword)
 #ifdef YATCPU
 void* memcpy(void* dst, const void * src, unsigned int size)
 {
-    int rem = size & 0x3;
-    int words = size >> 2;
-    int* word_dst = (int*) dst;
-    int* word_src = (int*) src;
-    for (int i = 0; i < words; ++i) {
-        *(word_dst++) = *(word_src++);
-    }
-    char *char_dst = (char*) word_dst;
-    char *char_src = (char*) word_src;
-    for (int i = 0; i < rem; ++i) {
+    char *char_dst = (char*) dst;
+    char *char_src = (char*) src;
+    while (size--) {
         *(char_dst++) = *(char_src++);
     }
     return (void*) dst;

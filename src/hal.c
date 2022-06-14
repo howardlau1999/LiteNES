@@ -53,34 +53,46 @@ volatile int timer_fired = 0;
 uint32_t digits[16] = {
   0x69999996,
   0x22222222,
-  0xE1168887,
+  0x61168886,
   0xE116111E,
   0x99961111,
-  0x7886111E,
+  0x68861116,
   0x68869996,
-  0xE1111111,
+  0x61111111,
   0x69969996,
   0x69961116,
   0x69996999,
   0xE99E999E,
   0x78888887,
   0xE999999E,
-  0x78878887,
+  0x78868887,
   0x78868888,
 };
 
-uint32_t color_map[64];
-uint32_t bg_color;
-uint32_t frame_buffer[CANVAS_WIDTH * CANVAS_HEIGHT];
+#ifdef RGB888
+typedef uint32_t rgb;
+const int left_border_end = 32;
+const int right_border_start = 288;
+const int right_border_end = 320;
+#else
+typedef uint16_t rgb;
+const int left_border_end = 16;
+const int right_border_start = 144;
+const int right_border_end = 160;
+#endif
 
-static inline uint16_t rgb888to565(unsigned char r, unsigned char g, unsigned char b) {
+rgb color_map[64];
+rgb bg_color;
+rgb frame_buffer[CANVAS_WIDTH * CANVAS_HEIGHT];
+
+uint16_t rgb888to565(unsigned char r, unsigned char g, unsigned char b) {
     uint16_t rgb565 = b >> 3;
     rgb565 |= (g >> 2) << 5;
     rgb565 |= (r >> 3) << 11;
     return rgb565;
 } 
 
-static inline uint32_t packrgb(unsigned char r, unsigned char g, unsigned char b) {
+uint32_t packrgb(unsigned char r, unsigned char g, unsigned char b) {
     return (r << 16) | (g << 8) | b;
 }
 
@@ -110,7 +122,7 @@ static void draw_digit(int x, int y, int digit) {
     for (int h = 0; h < 8; ++h) {
         for (int w = 0; w < 4; ++w) {
             if (bits & (1 << ((7 - h) * 4 + (3 - w)))) {
-                frame_buffer[(y + h) * CANVAS_WIDTH + (x + w)] = 0xFFFFFFFF;
+                frame_buffer[(y + h) * CANVAS_WIDTH + (x + w)] = (rgb) 0xFFFFFFFF;
             }
         }
     }
@@ -132,9 +144,8 @@ void nes_flush_buf(PixelBuf *buf) {
         Pixel *p = &buf->buf[i];
         int x = ((p->xyc & 0xFFF00000) >> 20) + X_OFFSET;
         int y = (p->xyc & 0xFFF00) >> 8;
-        int cc = p->xyc & 0xFF;
-        uint32_t c = color_map[cc];
-        frame_buffer[y * CANVAS_WIDTH + x] = c;
+        int c = p->xyc & 0x3F;
+        frame_buffer[y * CANVAS_WIDTH + x] = color_map[c];
     }
     buf->size = 0;
 }
@@ -163,16 +174,20 @@ void nes_hal_init()
 {
     for (int i = 0; i < 64; i ++) {
         pal color = palette[i];
+        #ifdef RGB888
         color_map[i] = packrgb(color.r, color.g, color.b);
+        #else
+        color_map[i] = rgb888to565(color.r, color.g, color.b);
+        #endif
     }
     #ifdef YATCPU
     int *vram = ((int *) VRAM);
     for (int y = 0; y < CANVAS_HEIGHT; ++y) {
-        for (int x = 0; x < 32; ++x) {
-            vram[y * CANVAS_WIDTH + x] = 0;
+        for (int x = 0; x < left_border_end; ++x) {
+            vram[y * right_border_end + x] = 0;
         }
-        for (int x = 288; x < 320; ++x) {
-            vram[y * CANVAS_WIDTH + x] = 0;
+        for (int x = right_border_start; x < right_border_end; ++x) {
+            vram[y * right_border_end + x] = 0;
         }
     }
     draw_frame_counter(32, 4);
@@ -191,20 +206,32 @@ void nes_flip_display()
     #ifdef YATCPU
     int *fbuf = ((int *) frame_buffer);
     int *vram = ((int *) VRAM);
+    #ifdef RGB888
+    #else
+    unsigned int bgcext = (bgc << 16) | bgc;
+    #endif
     for (int y = 0; y < CANVAS_HEIGHT; ++y) {
-        for (int x = 32; x < 288; ++x) {
-            int i = y * CANVAS_WIDTH + x;
+        for (int x = left_border_end; x < right_border_start; ++x) {
+            int i = y * right_border_end + x;
             vram[i] = fbuf[i];
+            #ifdef RGB888
             fbuf[i] = bgc;
+            #else
+            fbuf[i] = bgcext;
+            #endif
         }
     }
     ++frames;
     #endif
     #ifdef LITENES_DEBUG
     char filename[32];
+    #ifdef RGB888
     snprintf(filename, 32, "frame_%d.rgb888", frames);
+    #else
+    snprintf(filename, 32, "frame_%d.rgb565", frames);
+    #endif
     FILE* fp = fopen(filename, "wb");
-    fwrite(frame_buffer, CANVAS_WIDTH * CANVAS_HEIGHT * 4, 1, fp);
+    fwrite(frame_buffer, sizeof(frame_buffer), 1, fp);
     fclose(fp);
     int* fbuf = ((int*)frame_buffer);
     for (int i = 0; i < CANVAS_HEIGHT * CANVAS_WIDTH; ++i) {

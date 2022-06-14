@@ -19,22 +19,62 @@ How does the emulator work?
 #ifdef YATCPU
 #include "mmio.h"
 #endif
+
 extern char rom[];
-#define CANVAS_WIDTH 320
-#define X_OFFSET 32
-#define CANVAS_HEIGHT 240
+
+extern const int left_border_end;
+extern const int right_border_start;
+extern const int right_border_end;
+
+unsigned int rgb888to565(unsigned char r, unsigned char g, unsigned char b); 
+unsigned short packrgb(unsigned char r, unsigned char g, unsigned char b);
+
+#ifdef RGB888
+unsigned int *vram = (unsigned int *) VRAM;
+#else
+unsigned short *vram = (unsigned short *) VRAM;
+#endif
+
+void delay(int count) {
+  while(count--);
+}
+
 int main(int argc, char *argv[])
 {
     #ifdef YATCPU 
-    int *vram = ((int *) VRAM);
-    for (int i = 0; i < 320 * 240; ++i) {
-        vram[i] = 0xFFFFFFFF;
+    int *bss_start = (int*) 0x00100000;
+    int *bss_end = (int*) 0x01000000;
+    for (int *p = bss_start; p < bss_end; ++p) {
+        *p = 0;
     }
+
+    for (int y = 0; y < 240; ++y) {
+      for (int x = 0; x < 320; ++x) {
+        int i = y * 320 + x;
+        int r = (x & 0xF) << 4;
+        int g = (x & 0xF0);
+        int b = 0xFF;
+        #ifdef RGB888
+        vram[i] = rgbpack(r, g, b);
+        #else
+        vram[i] = rgb888to565(r, g, b);
+        #endif
+      }
+    }
+
+    delay(100000);
+
     #endif
     int res = fce_load_rom(rom);
     #ifdef YATCPU
+    unsigned int c;
+    #ifdef RGB888
+    c = rgbpack(0, 255, 0);
+    #else
+    c = rgb888to565(0, 255, 0);
+    #endif
     for (int i = 0; i < 320 * 240; ++i) {
-        vram[i] = 0x000000FF;
+      vram[i] = c;
     }
     #endif
     #ifdef LITENES_DEBUG
@@ -47,13 +87,6 @@ int main(int argc, char *argv[])
       printf("ROM Loaded.\n");
     #endif
     fce_init();
-    #ifdef YATCPU
-        for (int y = 0; y < CANVAS_HEIGHT; ++y) {
-        for (int x = 32; x < 288; ++x) {
-            vram[y * CANVAS_WIDTH + x] = 0x0000FF00;
-        }
-    }
-    #endif
     #ifdef LITENES_DEBUG
       printf("FCE initialized.\n");
     #endif
