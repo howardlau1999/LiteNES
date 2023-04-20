@@ -115,6 +115,30 @@ void wait_for_frame()
 void nes_set_bg_color(int c)
 {
     bg_color = color_map[c];
+    int bgc = bg_color;
+    #ifdef YATCPU
+    int *fbuf = ((int *) frame_buffer);
+    int *vram = ((int *) VRAM);
+    #ifdef RGB888
+    #else
+    unsigned int bgcext = (bgc << 16) | bgc;
+    #endif
+    for (int y = 0; y < CANVAS_HEIGHT; ++y) {
+        for (int x = left_border_end; x < right_border_start; ++x) {
+            int i = y * right_border_end + x;
+            #ifdef RGB888
+            vram[i] = fbuf[i] = bgc;
+            #else
+            vram[i] = fbuf[i] = bgcext;
+            #endif
+        }
+    }
+    #else
+    int* fbuf = ((int*)frame_buffer);
+    for (int i = 0; i < CANVAS_HEIGHT * CANVAS_WIDTH / 2; ++i) {
+        fbuf[i] = bgc << 16 | bgc;
+    }
+    #endif
 }
 
 static void draw_digit(int x, int y, int digit) {
@@ -147,7 +171,6 @@ void nes_flush_buf(PixelBuf *buf) {
         int c = p->xyc & 0x3F;
         frame_buffer[y * CANVAS_WIDTH + x] = color_map[c];
     }
-    buf->size = 0;
 }
 
 #ifdef YATCPU
@@ -234,8 +257,8 @@ void nes_flip_display()
     fwrite(frame_buffer, sizeof(frame_buffer), 1, fp);
     fclose(fp);
     int* fbuf = ((int*)frame_buffer);
-    for (int i = 0; i < CANVAS_HEIGHT * CANVAS_WIDTH; ++i) {
-        fbuf[i] = bgc;
+    for (int i = 0; i < CANVAS_HEIGHT * CANVAS_WIDTH / 2; ++i) {
+        fbuf[i] = bgc << 16 | bgc;
     }
 
     if (frames >= EMU_FRAMES) {

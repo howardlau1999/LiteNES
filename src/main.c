@@ -29,10 +29,12 @@ extern const int right_border_end;
 unsigned int rgb888to565(unsigned char r, unsigned char g, unsigned char b); 
 unsigned short packrgb(unsigned char r, unsigned char g, unsigned char b);
 
+#ifdef YATCPU
 #ifdef RGB888
 unsigned int *vram = (unsigned int *) VRAM;
 #else
 unsigned short *vram = (unsigned short *) VRAM;
+#endif
 #endif
 
 void delay(int count) {
